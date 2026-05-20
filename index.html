@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wilmott QF 03 &mdash; The Binomial Model</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]})"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0a0a; --bg-card: #0d1117; --bg-code: #161b22;
+            --text-primary: #e6edf3; --text-secondary: #8b949e;
+            --accent: #fbbf24; --accent-dim: #fbbf2444; --accent-glow: #fbbf2433;
+            --accent-2: #f472b6; --accent-3: #a78bfa; --accent-4: #34d399;
+            --accent-5: #60a5fa;
+            --border: #21262d;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+            --font-body: 'Inter', sans-serif;
+            --max-width: 900px;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body { background: var(--bg-primary); color: var(--text-primary); font-family: var(--font-body); font-size: 17px; line-height: 1.7; overflow-x: hidden; }
+        .hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 2rem 1.5rem; text-align: center; position: relative; }
+        .hero::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 700px; height: 600px; background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+        .hero > * { position: relative; z-index: 1; }
+        .series-label { font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1rem; }
+        .hero h1 { font-family: var(--font-display); font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 700; color: var(--text-primary); line-height: 1.2; margin-bottom: 1rem; }
+        .hero h1 .accent { color: var(--accent); }
+        .hero .subtitle { font-size: 1.1rem; color: var(--text-secondary); max-width: 640px; margin-bottom: 2rem; }
+        .tags { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; margin-bottom: 2.5rem; }
+        .tag { font-family: var(--font-mono); font-size: 0.75rem; padding: 0.25rem 0.75rem; border-radius: 999px; border: 1px solid var(--accent); color: var(--accent); background: var(--accent-dim); white-space: nowrap; }
+        .pipeline { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.25rem; margin-bottom: 1rem; max-width: var(--max-width); }
+        .pipeline-step { font-family: var(--font-mono); font-size: 0.7rem; padding: 0.3rem 0.7rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; color: var(--text-secondary); white-space: nowrap; }
+        .pipeline-arrow { color: var(--accent); font-size: 0.9rem; font-weight: 700; }
+        .slide { min-height: 100vh; max-width: var(--max-width); margin: 0 auto; padding: 4rem 1.5rem; position: relative; display: flex; flex-direction: column; justify-content: center; }
+        .slide-number { font-family: var(--font-display); font-size: 5rem; font-weight: 700; color: var(--accent-dim); position: absolute; top: 2rem; right: 1.5rem; line-height: 1; user-select: none; }
+        .slide h2 { font-family: var(--font-display); font-size: 1.9rem; font-weight: 700; color: var(--accent); margin-bottom: 1.5rem; line-height: 1.25; }
+        .slide h3 { font-family: var(--font-display); font-size: 1.3rem; font-weight: 600; color: var(--text-primary); margin-top: 1.5rem; margin-bottom: 0.75rem; }
+        .slide p { margin-bottom: 1rem; color: var(--text-secondary); }
+        .slide p strong { color: var(--text-primary); }
+        .slide ul, .slide ol { margin-bottom: 1rem; padding-left: 1.5rem; color: var(--text-secondary); }
+        .slide li { margin-bottom: 0.4rem; }
+        .slide li strong { color: var(--text-primary); }
+        .slide code { background: var(--bg-code); padding: 0.1rem 0.35rem; border-radius: 3px; font-family: var(--font-mono); font-size: 0.85em; color: var(--accent); }
+        .diagram-grid { display: grid; gap: 0.75rem; margin: 1.5rem 0; padding: 1.5rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; }
+        .diagram-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+        .diagram-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .diagram-grid.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+        .diagram-panel { padding: 1rem; background: var(--bg-code); border: 1px solid var(--border); border-radius: 6px; }
+        .diagram-panel.accent-border { border-left: 3px solid var(--accent); }
+        .diagram-panel.r { border-left: 3px solid var(--accent-2); }
+        .diagram-panel.p { border-left: 3px solid var(--accent-3); }
+        .diagram-panel.g { border-left: 3px solid var(--accent-4); }
+        .diagram-panel.b { border-left: 3px solid var(--accent-5); }
+        .diagram-panel h4 { font-family: var(--font-display); font-size: 1rem; color: var(--accent); margin-bottom: 0.5rem; }
+        .diagram-panel.r h4 { color: var(--accent-2); }
+        .diagram-panel.p h4 { color: var(--accent-3); }
+        .diagram-panel.g h4 { color: var(--accent-4); }
+        .diagram-panel.b h4 { color: var(--accent-5); }
+        .diagram-panel p, .diagram-panel ul { font-size: 0.9rem; }
+        .callout { background: var(--bg-card); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 1rem 1.25rem; margin: 1.25rem 0; }
+        .callout p { margin-bottom: 0; }
+        .callout .callout-label { font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.3rem; }
+        .quote { font-family: var(--font-display); font-size: 1.1rem; font-style: italic; color: var(--text-primary); padding: 1rem 1.5rem; border-left: 3px solid var(--accent); background: var(--bg-card); margin: 1.25rem 0; border-radius: 0 8px 8px 0; }
+        .quote .attr { display: block; margin-top: 0.5rem; font-style: normal; font-size: 0.85rem; color: var(--text-secondary); font-family: var(--font-mono); }
+        .canvas-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin: 1.25rem 0; overflow-x: auto; }
+        .canvas-wrap canvas, .canvas-wrap svg { display: block; margin: 0 auto; max-width: 100%; }
+        .control-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; margin: 1.25rem 0; }
+        .control-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+        .control-row label { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-secondary); min-width: 160px; }
+        .control-row input[type="range"] { flex: 1; min-width: 150px; accent-color: var(--accent); }
+        .control-row select, .control-row input[type="number"] { background: var(--bg-code); border: 1px solid var(--border); color: var(--text-primary); border-radius: 4px; padding: 0.3rem 0.5rem; font-family: var(--font-mono); font-size: 0.8rem; }
+        .control-row .val { font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); min-width: 80px; text-align: right; }
+        .btn { font-family: var(--font-mono); font-size: 0.8rem; padding: 0.4rem 0.9rem; background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent); border-radius: 4px; cursor: pointer; transition: background 0.15s ease; }
+        .btn:hover { background: rgba(251,191,36,0.25); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn.secondary { background: var(--bg-code); color: var(--text-secondary); border-color: var(--border); }
+        .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.5rem; margin-top: 0.75rem; }
+        .metric { background: var(--bg-code); border: 1px solid var(--border); border-radius: 6px; padding: 0.6rem 0.8rem; text-align: center; }
+        .metric .metric-label { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.08em; }
+        .metric .metric-value { font-family: var(--font-display); font-size: 1.25rem; color: var(--accent); font-weight: 600; margin-top: 0.2rem; }
+        .contents-list { list-style: none; padding-left: 0; counter-reset: contents; }
+        .contents-list li { counter-increment: contents; padding: 0.6rem 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 1rem; }
+        .contents-list li:last-child { border-bottom: none; }
+        .contents-list li::before { content: counter(contents, decimal-leading-zero); font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); min-width: 2rem; }
+        .contents-list a { color: var(--text-primary); text-decoration: none; }
+        .contents-list a:hover { color: var(--accent); }
+        .footer { text-align: center; padding: 3rem 1.5rem; color: var(--text-secondary); font-size: 0.85rem; border-top: 1px solid var(--border); max-width: var(--max-width); margin: 0 auto; }
+        .footer a { color: var(--accent); text-decoration: none; }
+        .katex { color: var(--text-primary); }
+        .katex-display { margin: 1rem 0; overflow-x: auto; overflow-y: hidden; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin: 1rem 0; }
+        th { background: var(--bg-code); color: var(--accent); font-weight: 600; text-align: left; padding: 0.6rem 0.85rem; border-bottom: 1px solid var(--border); font-family: var(--font-display); }
+        td { padding: 0.5rem 0.85rem; border-bottom: 1px solid var(--border); color: var(--text-secondary); vertical-align: top; }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) td { background: rgba(13, 17, 23, 0.5); }
+        @media (max-width: 640px) {
+            .slide { padding: 3rem 1rem; min-height: auto; }
+            .slide-number { font-size: 3rem; top: 1.5rem; right: 1rem; }
+            .slide h2 { font-size: 1.5rem; }
+            .diagram-grid.cols-2, .diagram-grid.cols-3, .diagram-grid.cols-4 { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="hero">
+    <div class="series-label">Paul Wilmott Introduces Quantitative Finance &mdash; Deck 03</div>
+    <h1>The Binomial <span class="accent">Model</span></h1>
+    <p class="subtitle">A two-state random walk for the share price, no-arbitrage hedging at every node, and the risk-neutral pricing recipe that becomes Black&ndash;Scholes in the limit.</p>
+
+    <div class="tags">
+        <span class="tag">tree</span><span class="tag">delta-hedge</span>
+        <span class="tag">no arbitrage</span><span class="tag">risk neutral</span>
+        <span class="tag">backward induction</span><span class="tag">American</span>
+        <span class="tag">CRR</span><span class="tag">BS limit</span>
+    </div>
+
+    <div class="pipeline">
+        <span class="pipeline-step">$S$ &uarr;$uS$ / &darr;$dS$</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">hedge $\Delta$</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">risk-neutral $p'$</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">backward induction</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">BS limit</span>
+    </div>
+</header>
+
+<section class="slide" id="slide-00">
+    <div class="slide-number">00</div>
+    <h2>Topics We'll Cover</h2>
+    <ul class="contents-list">
+        <li><a href="#slide-01">Why we need a model &mdash; the one-step setup</a></li>
+        <li><a href="#slide-02">Hedging in the one-step tree &mdash; choosing $\Delta$</a></li>
+        <li><a href="#slide-03">The no-arbitrage backward equation</a></li>
+        <li><a href="#slide-04">Where did the real probability go? Risk-neutral pricing</a></li>
+        <li><a href="#slide-05">The multi-step recombining tree</a></li>
+        <li><a href="#slide-06">Backward induction &mdash; a worked example</a></li>
+        <li><a href="#slide-07">Greeks from the tree</a></li>
+        <li><a href="#slide-08">American options &mdash; the early-exercise boundary</a></li>
+        <li><a href="#slide-09">The continuous limit &mdash; CRR converges to GBM</a></li>
+        <li><a href="#slide-10">Interactive: binomial tree pricer</a></li>
+    </ul>
+</section>
+
+<section class="slide" id="slide-01">
+    <div class="slide-number">01</div>
+    <h2>Why a Model &mdash; The One-Step Setup</h2>
+    <p>Deck 02 priced contracts that had no probability in them at all (forwards, parity). Once we want the price of a <em>call</em>, we have to commit to some statement about how the underlying might move. The binomial model is the simplest statement that gets us all the way to a hedged price.</p>
+
+    <div class="quote">
+        <p>"The binomial method is mathematically simple, yet it contains all the important ideas of derivative pricing."</p>
+        <span class="attr">&mdash; Wilmott, Ch. 3</span>
+    </div>
+
+    <p>Suppose at time $0$ the share has price $S$. Over a single time step $\delta t$, the share price can only go to one of two values:</p>
+
+    <p>$$S \;\longrightarrow\; \begin{cases} uS & \text{with real probability } p, \\ dS & \text{with real probability } 1-p, \end{cases}$$</p>
+
+    <p>with $d < 1 + r\delta t < u$ (the no-arbitrage condition: the bank-account return must lie between the worst-case and best-case stock return, or you could earn a riskless profit by going long or short the stock).</p>
+
+    <div class="diagram-grid cols-2">
+        <div class="diagram-panel g">
+            <h4>The stock</h4>
+            <p>Today: $S$. Tomorrow: $uS$ (up) or $dS$ (down). The probabilities $p, 1-p$ are real-world; we'll see in a moment that they don't matter.</p>
+        </div>
+        <div class="diagram-panel b">
+            <h4>The derivative</h4>
+            <p>Some function $V(S,t)$ we want to price. At the end of the step it has known values $V^+$ (up state) and $V^-$ (down state) &mdash; for a call at expiry, $V^\pm = \max(uS-K,0)$ or $\max(dS-K,0)$.</p>
+        </div>
+    </div>
+
+    <div class="callout">
+        <div class="callout-label">Cartoon, not caricature</div>
+        <p>Two states per step looks absurdly crude; the trick is that with enough steps the multi-step tree converges to the same Black&ndash;Scholes price as a continuous random walk. The two-state structure is exactly what lets us hedge perfectly.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-02">
+    <div class="slide-number">02</div>
+    <h2>Hedging in the One-Step Tree</h2>
+    <p>Form a portfolio: long one derivative, short $\Delta$ shares.</p>
+    <p>$$\Pi = V - \Delta S.$$</p>
+
+    <p>Over the step the portfolio becomes:</p>
+    <table>
+        <thead><tr><th>state</th><th>derivative</th><th>stock</th><th>portfolio</th></tr></thead>
+        <tbody>
+            <tr><td>up</td><td>$V^+$</td><td>$uS$</td><td>$V^+ - \Delta\, uS$</td></tr>
+            <tr><td>down</td><td>$V^-$</td><td>$dS$</td><td>$V^- - \Delta\, dS$</td></tr>
+        </tbody>
+    </table>
+
+    <p><strong>Trick:</strong> choose $\Delta$ so that the portfolio is worth the <em>same</em> amount in both states. That kills all the risk.</p>
+
+    <p>$$V^+ - \Delta\, uS = V^- - \Delta\, dS \quad\Longrightarrow\quad \boxed{\;\Delta = \dfrac{V^+ - V^-}{uS - dS}.\;}$$</p>
+
+    <p>This is the <strong>delta-hedge ratio</strong>. The number of shares to short per option is the slope of the option payoff with respect to the stock, evaluated discretely across the two branches.</p>
+
+    <div class="diagram-grid cols-2">
+        <div class="diagram-panel accent-border">
+            <h4>The hedged portfolio is riskless</h4>
+            <p>By construction $\Pi$ takes the <em>same</em> value at the end of $\delta t$ no matter which way the stock moves. A riskless portfolio must earn the risk-free rate, or arbitrage exists.</p>
+        </div>
+        <div class="diagram-panel p">
+            <h4>Why this works</h4>
+            <p>Two states, two unknowns (the option price now, and one share count). With exactly enough degrees of freedom to make the portfolio deterministic, you get a unique price &mdash; with no reference to $p$.</p>
+        </div>
+    </div>
+
+    <div class="callout">
+        <div class="callout-label">The key insight of the book</div>
+        <p>Pricing a derivative is not about predicting where the stock will go. It is about <em>hedging</em> &mdash; building a portfolio whose return is locked in. The price is whatever makes that locked-in return equal to $r$.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-03">
+    <div class="slide-number">03</div>
+    <h2>The No-Arbitrage Backward Equation</h2>
+    <p>The hedged portfolio $\Pi$ is riskless, so over one time step it earns the risk-free rate:</p>
+    <p>$$\Pi(0) \cdot (1 + r\delta t) = \Pi(\delta t).$$</p>
+
+    <p>Substituting $\Pi = V - \Delta S$ and the up-state value:</p>
+    <p>$$(V - \Delta S)(1 + r\delta t) = V^+ - \Delta\, uS.$$</p>
+
+    <p>Rearranging for $V$ and substituting $\Delta = (V^+ - V^-)/(uS - dS)$ produces the central formula of the chapter:</p>
+
+    <p>$$\boxed{\;V = \dfrac{1}{1 + r\delta t}\Bigl(p'\, V^+ + (1-p')\, V^-\Bigr),\quad p' = \dfrac{(1 + r\delta t) - d}{u - d}.\;}$$</p>
+
+    <p>The number $p'$ is called the <strong>risk-neutral probability</strong>. It plays the role of a probability (it lies in $(0,1)$ exactly when the no-arbitrage condition $d < 1 + r\delta t < u$ holds), but it is not the probability anyone believes in. It's the unique number that makes the present value of the stock equal to its current price under discounting at $r$:</p>
+
+    <p>$$S = \frac{1}{1+r\delta t}\bigl(p'\, uS + (1-p')\, dS\bigr).$$</p>
+
+    <div class="callout">
+        <div class="callout-label">In words</div>
+        <p>Price today = (risk-neutral expectation of price tomorrow) discounted at $r$. The whole rest of the book is one variant or another of this single formula.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-04">
+    <div class="slide-number">04</div>
+    <h2>Where Did the Real Probability Go?</h2>
+    <p>$p$ &mdash; the actual probability that the stock goes up &mdash; never appeared in the price. This is the most surprising thing in the chapter.</p>
+
+    <div class="diagram-grid cols-2">
+        <div class="diagram-panel r">
+            <h4>What you'd guess</h4>
+            <p>Pricing the option = take the expected payoff under the real-world probability $p$, discount it back. That would give</p>
+            <p>$$V \stackrel{?}{=} \frac{p V^+ + (1-p) V^-}{1+r\delta t}.$$</p>
+            <p>This is <em>wrong</em> &mdash; it's the price two risk-neutral parties would agree on if neither could hedge.</p>
+        </div>
+        <div class="diagram-panel g">
+            <h4>What you get</h4>
+            <p>The correct price replaces $p$ with $p'$:</p>
+            <p>$$V = \frac{p' V^+ + (1-p') V^-}{1+r\delta t}.$$</p>
+            <p>Same shape, different probability. The hedger doesn't care what $p$ is &mdash; their portfolio is risk-free regardless.</p>
+        </div>
+    </div>
+
+    <h3>Risk-neutral probability, intuitively</h3>
+    <p>$p'$ is the probability under which the stock has expected return $r$ (the risk-free rate) rather than its actual expected return $\mu$. The hedging argument has the effect of <em>changing measure</em> from the real-world probability to one in which everyone is risk-neutral. This is the discrete-time prototype of Girsanov's theorem (Deck 05).</p>
+
+    <div class="callout">
+        <div class="callout-label">Two views of the same calculation</div>
+        <p>"Construct a hedged portfolio and demand it earns $r$" and "take the risk-neutral expectation and discount at $r$" are the same statement said in different words. Wilmott prefers the hedging view because the calibration to the market is concrete.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-05">
+    <div class="slide-number">05</div>
+    <h2>The Multi-Step Recombining Tree</h2>
+    <p>Iterate the one-step model over $N$ periods of length $\delta t = T/N$. Insist that an "up then down" gives the same price as "down then up" &mdash; i.e. $ud$ in either order. With constant $u, d$ this is automatic and the tree is <strong>recombining</strong>: after $n$ steps there are only $n+1$ distinct nodes, not $2^n$.</p>
+
+    <div class="canvas-wrap">
+        <canvas id="tree-canvas" width="780" height="320"></canvas>
+    </div>
+
+    <p>After $n$ steps the share price at node $(n, j)$ &mdash; with $j$ counting up-moves, $0 \le j \le n$ &mdash; is</p>
+    <p>$$S_n^{(j)} = S_0\, u^{j} d^{\,n-j}.$$</p>
+
+    <p>At maturity ($n=N$) the option's payoff is known:</p>
+    <p>$$V_N^{(j)} = \mathrm{payoff}(S_0\, u^{j} d^{N-j}).$$</p>
+
+    <p>For a European call this is $\max(S_N^{(j)} - K, 0)$; for a put, $\max(K - S_N^{(j)}, 0)$. From there we walk <em>backwards</em>.</p>
+
+    <div class="callout">
+        <div class="callout-label">Why recombining matters</div>
+        <p>A non-recombining tree has $2^N$ leaves &mdash; pricing 30 steps deep is already a billion-node calculation. A recombining tree has $N+1$ leaves and $O(N^2)$ total nodes. The whole "lattice methods" industry depends on this.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-06">
+    <div class="slide-number">06</div>
+    <h2>Backward Induction &mdash; A Worked Example</h2>
+    <p>At every internal node the one-step formula applies:</p>
+    <p>$$V_n^{(j)} = \frac{1}{1 + r\delta t}\Bigl(p'\, V_{n+1}^{(j+1)} + (1-p')\, V_{n+1}^{(j)}\Bigr).$$</p>
+
+    <p>Sweep from $n = N$ down to $n = 0$. At the root you have $V_0$, the price of the option.</p>
+
+    <h3>3-step European call</h3>
+    <p>Let $S_0 = 100$, $K = 100$, $r = 0.05$, $\sigma = 0.20$, $T = 1$, $N = 3$. Choose CRR: $u = e^{\sigma\sqrt{\delta t}}$, $d = 1/u$.</p>
+    <p>$$\delta t = 1/3 \approx 0.333,\quad u \approx 1.1224,\quad d \approx 0.8909,\quad p' = \frac{e^{r\delta t} - d}{u-d} \approx 0.5398.$$</p>
+
+    <h3>Step 3 (payoffs)</h3>
+    <table>
+        <thead><tr><th>$j$</th><th>$S_3^{(j)}$</th><th>$V_3^{(j)} = (S-K)^+$</th></tr></thead>
+        <tbody>
+            <tr><td>3</td><td>141.4</td><td>41.4</td></tr>
+            <tr><td>2</td><td>112.2</td><td>12.2</td></tr>
+            <tr><td>1</td><td>89.1</td><td>0</td></tr>
+            <tr><td>0</td><td>70.7</td><td>0</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Roll back to $n=0$</h3>
+    <p>Applying the recursion three times gives $V_0 \approx 10.59$. The closed-form Black&ndash;Scholes price for the same parameters is $\approx 10.45$ &mdash; the binomial price converges to it as $N \to \infty$.</p>
+
+    <div class="callout">
+        <div class="callout-label">Convergence rate</div>
+        <p>The binomial price oscillates above and below the BS price as $N$ grows, with error $O(1/N)$ in the standard CRR scheme. Refinements (Tian, Leisen&ndash;Reimer) smooth this oscillation.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-07">
+    <div class="slide-number">07</div>
+    <h2>The Greeks From the Tree</h2>
+    <p>The Greeks are sensitivities of $V$ to the inputs. The tree gives them for free as finite differences across adjacent nodes.</p>
+
+    <div class="diagram-grid cols-3">
+        <div class="diagram-panel g">
+            <h4>Delta</h4>
+            <p>$$\Delta = \frac{\partial V}{\partial S} \approx \frac{V_1^{(1)} - V_1^{(0)}}{uS_0 - dS_0}.$$</p>
+            <p>The hedge ratio at the root &mdash; the slope between the two nodes one step out.</p>
+        </div>
+        <div class="diagram-panel p">
+            <h4>Gamma</h4>
+            <p>$$\Gamma \approx \frac{\Delta_+ - \Delta_-}{(u-d)S_0/2 \cdot (\text{average})}.$$</p>
+            <p>Use the two deltas at the up-node and down-node of step 1; differencing them gives gamma at the root. Best taken from step 2 nodes against step 0.</p>
+        </div>
+        <div class="diagram-panel b">
+            <h4>Theta</h4>
+            <p>$$\Theta \approx \frac{V_2^{(1)} - V_0}{2\delta t}.$$</p>
+            <p>The middle node at step 2 is at the same stock price as the root (because $ud=1$ in CRR), so the difference is a clean time-only effect.</p>
+        </div>
+    </div>
+
+    <h3>Vega and Rho</h3>
+    <p>Vega ($\partial V/\partial \sigma$) and rho ($\partial V/\partial r$) are computed by <em>rebuilding</em> the tree with bumped inputs and finite-differencing the resulting prices. Slightly more expensive, but still cheap.</p>
+
+    <div class="callout">
+        <div class="callout-label">A practitioner's habit</div>
+        <p>Delta and gamma fall out of the same backward sweep that produced the price &mdash; no extra trees. That is the main reason traders prefer lattices to Monte Carlo for vanilla products: the Greeks are essentially free.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-08">
+    <div class="slide-number">08</div>
+    <h2>American Options &mdash; Early Exercise</h2>
+    <p>An American option can be exercised at any node in the tree. At each node compare:</p>
+
+    <p>$$V_n^{(j)} = \max\Bigl(\,\underbrace{\mathrm{payoff}(S_n^{(j)})}_{\text{exercise now}}\,,\;\underbrace{\tfrac{1}{1+r\delta t}\bigl(p' V^+ + (1-p') V^-\bigr)}_{\text{continuation}}\,\Bigr).$$</p>
+
+    <p>This is dynamic programming &mdash; the celebrated <em>Bellman</em> form. Backward induction with a $\max$ at every node.</p>
+
+    <div class="diagram-grid cols-2">
+        <div class="diagram-panel g">
+            <h4>American call on a non-dividend stock</h4>
+            <p>Never optimal to exercise early: continuation value dominates intrinsic. American call price = European call price for non-dividend stocks.</p>
+        </div>
+        <div class="diagram-panel r">
+            <h4>American put</h4>
+            <p>Can be optimal to exercise early &mdash; intrinsic value can exceed continuation value when the stock is deep ITM, because the holder is forgoing further downside but receiving the interest on $K$ now.</p>
+        </div>
+    </div>
+
+    <h3>The early-exercise boundary</h3>
+    <p>The set of $(S, t)$ pairs at which exercise becomes optimal traces out a smooth curve, the <strong>early-exercise boundary</strong> $S^*(t)$. Below it (for a put), exercise; above it, hold. The boundary is unknown in advance &mdash; the lattice finds it implicitly, the PDE picture (later decks) treats it as a free boundary.</p>
+
+    <div class="callout">
+        <div class="callout-label">Why this matters for FX and futures options</div>
+        <p>Once the underlying pays a non-zero "yield" (dividends, foreign interest rate, futures roll), American calls <em>can</em> rationally be exercised early. The binomial $\max$-step is the simplest way to capture that without solving a free-boundary PDE.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-09">
+    <div class="slide-number">09</div>
+    <h2>The Continuous Limit &mdash; CRR &rarr; GBM</h2>
+    <p>Cox, Ross and Rubinstein (1979) made the standard choice:</p>
+    <p>$$u = e^{\sigma\sqrt{\delta t}},\qquad d = e^{-\sigma\sqrt{\delta t}} = 1/u,\qquad p' = \frac{e^{r\delta t} - d}{u - d}.$$</p>
+
+    <p>One step of this tree, in log space, is a centred jump of $\pm \sigma\sqrt{\delta t}$. Over $N$ steps the log-return is a sum of $N$ such jumps; by the central limit theorem,</p>
+    <p>$$\log(S_T/S_0) \to \mathcal{N}\!\bigl((r - \tfrac12 \sigma^2) T,\; \sigma^2 T\bigr).$$</p>
+
+    <p>This is exactly the distribution of $\log S_T$ under geometric Brownian motion with drift $r$ and volatility $\sigma$. So the binomial-tree price converges to the Black&ndash;Scholes price.</p>
+
+    <div class="diagram-grid cols-2">
+        <div class="diagram-panel b">
+            <h4>Why $\sqrt{\delta t}$?</h4>
+            <p>Variance is additive in time, standard deviation is the square root. To recover continuous-time vol $\sigma$ in a single step, the jump size must scale like $\sigma\sqrt{\delta t}$ &mdash; not $\sigma\delta t$.</p>
+        </div>
+        <div class="diagram-panel g">
+            <h4>Why $u d = 1$?</h4>
+            <p>Symmetry in log-space. Recombining is automatic; up-then-down brings you back to the start; the tree is centred on $S_0$ at every even step.</p>
+        </div>
+    </div>
+
+    <h3>Alternative parametrisations</h3>
+    <ul>
+        <li><strong>Jarrow&ndash;Rudd:</strong> $p' = 1/2$; $u, d$ are asymmetric.</li>
+        <li><strong>Tian:</strong> matches the first three moments of the GBM increment exactly.</li>
+        <li><strong>Leisen&ndash;Reimer:</strong> targets the BS price directly &mdash; very fast convergence but less probabilistic interpretation.</li>
+    </ul>
+
+    <div class="callout">
+        <div class="callout-label">Bridge to Deck 04</div>
+        <p>The next deck introduces the continuous-time random walk &mdash; geometric Brownian motion &mdash; whose discrete avatar you have just been pricing on a tree. Same model, different language.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-10">
+    <div class="slide-number">10</div>
+    <h2>Interactive: Binomial Tree Pricer</h2>
+    <p>Slide the inputs. The tree redraws live: node radius scales with share price, node colour with option value (yellow = high, blue = low). The metric grid shows the CRR parameters, the option price at the root, the initial delta, and a Black&ndash;Scholes reference price.</p>
+
+    <div class="canvas-wrap">
+        <canvas id="bin-canvas" width="780" height="360"></canvas>
+    </div>
+
+    <div class="control-panel">
+        <div class="control-row">
+            <label for="b-s">Spot $S_0$</label>
+            <input type="range" id="b-s" min="50" max="150" step="1" value="100">
+            <span class="val" id="b-s-v">100.00</span>
+        </div>
+        <div class="control-row">
+            <label for="b-k">Strike $K$</label>
+            <input type="range" id="b-k" min="50" max="150" step="1" value="100">
+            <span class="val" id="b-k-v">100.00</span>
+        </div>
+        <div class="control-row">
+            <label for="b-r">Rate $r$ (%)</label>
+            <input type="range" id="b-r" min="0" max="10" step="0.05" value="5">
+            <span class="val" id="b-r-v">5.00%</span>
+        </div>
+        <div class="control-row">
+            <label for="b-sig">Volatility $\sigma$ (%)</label>
+            <input type="range" id="b-sig" min="5" max="80" step="0.5" value="20">
+            <span class="val" id="b-sig-v">20.0%</span>
+        </div>
+        <div class="control-row">
+            <label for="b-t">Maturity $T$ (years)</label>
+            <input type="range" id="b-t" min="0.1" max="3" step="0.05" value="1">
+            <span class="val" id="b-t-v">1.00</span>
+        </div>
+        <div class="control-row">
+            <label for="b-n">Steps $N$</label>
+            <input type="range" id="b-n" min="1" max="30" step="1" value="6">
+            <span class="val" id="b-n-v">6</span>
+        </div>
+        <div class="control-row">
+            <label>Style</label>
+            <select id="b-style"><option value="E">European</option><option value="A">American</option></select>
+            <label style="min-width:60px;">Type</label>
+            <select id="b-type"><option value="C">Call</option><option value="P">Put</option></select>
+        </div>
+        <div class="metric-grid">
+            <div class="metric"><div class="metric-label">u</div><div class="metric-value" id="m-u">&mdash;</div></div>
+            <div class="metric"><div class="metric-label">d</div><div class="metric-value" id="m-d">&mdash;</div></div>
+            <div class="metric"><div class="metric-label">p'</div><div class="metric-value" id="m-p">&mdash;</div></div>
+            <div class="metric"><div class="metric-label">Option price</div><div class="metric-value" id="m-v">&mdash;</div></div>
+            <div class="metric"><div class="metric-label">Delta_0</div><div class="metric-value" id="m-delta">&mdash;</div></div>
+            <div class="metric"><div class="metric-label">BS price</div><div class="metric-value" id="m-bs">&mdash;</div></div>
+        </div>
+    </div>
+
+    <p>Watch $p'$ shift as you change $r$ and $\sigma$. Increase $N$ and notice the price oscillating around the BS value. Switch to an American put and (with $r > 0$) see the tree price exceed the European put.</p>
+</section>
+
+<footer class="footer">
+    <p>Deck 03 of the <a href="https://github.com/BrendanJamesLynskey/Wilmott_QF_Hub">Paul Wilmott Introduces Quantitative Finance &mdash; Companion Series</a>.</p>
+    <p style="margin-top: 0.6rem;">Companion to chapter 3 of <em>Paul Wilmott Introduces Quantitative Finance</em>, 2nd edition (Wiley, 2007).</p>
+</footer>
+
+<script>
+// ===== Slide 05: simple recombining tree illustration =====
+(function() {
+    const canvas = document.getElementById('tree-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    const N = 4;
+    const padL = 60, padR = 80, padT = 30, padB = 40;
+    const plotW = W - padL - padR, plotH = H - padT - padB;
+    const dxC = plotW / N;
+    const dyC = plotH / (2 * N);
+    const S0 = 100, u = 1.15, d = 1/u;
+
+    ctx.clearRect(0,0,W,H);
+
+    // edges
+    ctx.strokeStyle = '#3a4252';
+    ctx.lineWidth = 1.2;
+    for (let n = 0; n < N; n++) {
+        for (let j = 0; j <= n; j++) {
+            const x1 = padL + n*dxC;
+            const y1 = padT + plotH/2 - (2*j - n) * dyC;
+            const x2 = padL + (n+1)*dxC;
+            const yUp = padT + plotH/2 - (2*(j+1) - (n+1)) * dyC;
+            const yDn = padT + plotH/2 - (2*j     - (n+1)) * dyC;
+            ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, yUp); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, yDn); ctx.stroke();
+        }
+    }
+
+    // nodes
+    for (let n = 0; n <= N; n++) {
+        for (let j = 0; j <= n; j++) {
+            const x = padL + n*dxC;
+            const y = padT + plotH/2 - (2*j - n) * dyC;
+            const S = S0 * Math.pow(u, j) * Math.pow(d, n-j);
+            ctx.fillStyle = '#fbbf24';
+            ctx.beginPath(); ctx.arc(x, y, 6, 0, 2*Math.PI); ctx.fill();
+            ctx.fillStyle = '#e6edf3';
+            ctx.font = '10px JetBrains Mono';
+            if (n === N) ctx.fillText(S.toFixed(1), x + 10, y + 4);
+        }
+    }
+
+    // axis label
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '11px JetBrains Mono';
+    for (let n = 0; n <= N; n++) {
+        const x = padL + n*dxC;
+        ctx.fillText('n=' + n, x - 12, padT + plotH + 22);
+    }
+    ctx.fillText('recombining 4-step tree', padL, padT - 10);
+})();
+</script>
+
+<script>
+// ===== Slide 10: binomial tree pricer =====
+(function() {
+    const $ = id => document.getElementById(id);
+    const canvas = $('bin-canvas'), ctx = canvas.getContext('2d');
+
+    const sliders = ['b-s','b-k','b-r','b-sig','b-t','b-n'].map($);
+    const vals    = ['b-s-v','b-k-v','b-r-v','b-sig-v','b-t-v','b-n-v'].map($);
+    const styleEl = $('b-style'), typeEl = $('b-type');
+
+    function fmt(x, dp) { return (Math.round(x*1e6)/1e6).toFixed(dp == null ? 4 : dp); }
+
+    function normCdf(x) {
+        // Abramowitz & Stegun approximation
+        const b1=0.319381530,b2=-0.356563782,b3=1.781477937,b4=-1.821255978,b5=1.330274429;
+        const p=0.2316419, c=0.39894228;
+        if (x >= 0) {
+            const t=1/(1+p*x);
+            return 1 - c*Math.exp(-x*x/2)*t*(t*(t*(t*(t*b5+b4)+b3)+b2)+b1);
+        } else {
+            const t=1/(1-p*x);
+            return c*Math.exp(-x*x/2)*t*(t*(t*(t*(t*b5+b4)+b3)+b2)+b1);
+        }
+    }
+    function bs(S, K, r, sig, T, isCall) {
+        const d1 = (Math.log(S/K) + (r + 0.5*sig*sig)*T) / (sig*Math.sqrt(T));
+        const d2 = d1 - sig*Math.sqrt(T);
+        return isCall
+            ? S*normCdf(d1) - K*Math.exp(-r*T)*normCdf(d2)
+            : K*Math.exp(-r*T)*normCdf(-d2) - S*normCdf(-d1);
+    }
+
+    function priceTree() {
+        const S0 = +sliders[0].value, K = +sliders[1].value;
+        const r = +sliders[2].value / 100, sig = +sliders[3].value / 100;
+        const T = +sliders[4].value, N = +sliders[5].value;
+        const isCall = typeEl.value === 'C', isAmer = styleEl.value === 'A';
+
+        const dt = T / N;
+        const u = Math.exp(sig * Math.sqrt(dt));
+        const d = 1 / u;
+        const p = (Math.exp(r*dt) - d) / (u - d);
+        const disc = Math.exp(-r*dt);
+
+        // stock tree S[n][j]
+        const S = []; const V = [];
+        for (let n = 0; n <= N; n++) {
+            const row = new Array(n+1);
+            for (let j = 0; j <= n; j++) row[j] = S0 * Math.pow(u, j) * Math.pow(d, n-j);
+            S.push(row); V.push(new Array(n+1));
+        }
+        // terminal
+        for (let j = 0; j <= N; j++) {
+            V[N][j] = isCall ? Math.max(S[N][j] - K, 0) : Math.max(K - S[N][j], 0);
+        }
+        // backward
+        for (let n = N - 1; n >= 0; n--) {
+            for (let j = 0; j <= n; j++) {
+                const cont = disc * (p * V[n+1][j+1] + (1-p) * V[n+1][j]);
+                if (isAmer) {
+                    const intr = isCall ? Math.max(S[n][j] - K, 0) : Math.max(K - S[n][j], 0);
+                    V[n][j] = Math.max(cont, intr);
+                } else {
+                    V[n][j] = cont;
+                }
+            }
+        }
+        const delta = (V[1][1] - V[1][0]) / (S[1][1] - S[1][0]);
+        return { S, V, u, d, p, dt, N, S0, K, r, sig, T, isCall, isAmer, delta };
+    }
+
+    function draw() {
+        // update slider readouts
+        vals[0].textContent = (+sliders[0].value).toFixed(2);
+        vals[1].textContent = (+sliders[1].value).toFixed(2);
+        vals[2].textContent = (+sliders[2].value).toFixed(2) + '%';
+        vals[3].textContent = (+sliders[3].value).toFixed(1) + '%';
+        vals[4].textContent = (+sliders[4].value).toFixed(2);
+        vals[5].textContent = sliders[5].value;
+
+        const res = priceTree();
+        const { S, V, u, d, p, N, delta, S0, K, r, sig, T, isCall } = res;
+
+        // metrics
+        $('m-u').textContent = fmt(u, 4);
+        $('m-d').textContent = fmt(d, 4);
+        $('m-p').textContent = fmt(p, 4);
+        $('m-v').textContent = fmt(V[0][0], 3);
+        $('m-delta').textContent = fmt(delta, 3);
+        $('m-bs').textContent = fmt(bs(S0, K, r, sig, T, isCall), 3);
+
+        // value range for colour
+        let vmax = 0;
+        for (let n = 0; n <= N; n++) for (let j = 0; j <= n; j++) if (V[n][j] > vmax) vmax = V[n][j];
+        if (vmax === 0) vmax = 1;
+        // S range for radius
+        let smin = Infinity, smax = -Infinity;
+        for (let n = 0; n <= N; n++) for (let j = 0; j <= n; j++) {
+            if (S[n][j] < smin) smin = S[n][j];
+            if (S[n][j] > smax) smax = S[n][j];
+        }
+
+        const W = canvas.width, H = canvas.height;
+        const padL = 50, padR = 110, padT = 30, padB = 40;
+        const plotW = W - padL - padR, plotH = H - padT - padB;
+        const dx = plotW / N;
+        const dy = plotH / (2 * N);
+
+        ctx.clearRect(0,0,W,H);
+
+        // edges (light)
+        ctx.strokeStyle = '#262d36'; ctx.lineWidth = 1;
+        for (let n = 0; n < N; n++) {
+            for (let j = 0; j <= n; j++) {
+                const x1 = padL + n*dx;
+                const y1 = padT + plotH/2 - (2*j - n) * dy;
+                const x2 = padL + (n+1)*dx;
+                const yUp = padT + plotH/2 - (2*(j+1) - (n+1)) * dy;
+                const yDn = padT + plotH/2 - (2*j     - (n+1)) * dy;
+                ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, yUp); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, yDn); ctx.stroke();
+            }
+        }
+
+        // nodes
+        for (let n = 0; n <= N; n++) {
+            for (let j = 0; j <= n; j++) {
+                const x = padL + n*dx;
+                const y = padT + plotH/2 - (2*j - n) * dy;
+                const t = (S[n][j] - smin) / (smax - smin || 1);
+                const radius = 2 + 5 * Math.max(0.5, Math.min(t + 0.5, 2));
+                // colour heatmap: low value -> blue, mid -> purple, high -> yellow
+                const vt = V[n][j] / vmax;
+                const cr = Math.round( 96 + (251 -  96) * vt );
+                const cg = Math.round(165 + (191 - 165) * vt );
+                const cb = Math.round(250 + ( 36 - 250) * vt );
+                ctx.fillStyle = `rgb(${cr},${cg},${cb})`;
+                ctx.beginPath(); ctx.arc(x, y, radius, 0, 2*Math.PI); ctx.fill();
+            }
+        }
+
+        // x ticks
+        ctx.fillStyle = '#8b949e'; ctx.font = '10px JetBrains Mono';
+        const step = Math.max(1, Math.ceil(N / 10));
+        for (let n = 0; n <= N; n += step) {
+            ctx.fillText('n=' + n, padL + n*dx - 10, padT + plotH + 18);
+        }
+
+        // legend block: terminal payoffs
+        const lx = padL + plotW + 12;
+        ctx.fillStyle = '#8b949e';
+        ctx.font = '11px JetBrains Mono';
+        ctx.fillText('terminal', lx, padT + 10);
+        ctx.fillText('S → V', lx, padT + 24);
+        ctx.font = '10px JetBrains Mono';
+        const showK = Math.min(N + 1, 6);
+        for (let k = 0; k < showK; k++) {
+            const j = N - k;
+            const sv = S[N][j].toFixed(1);
+            const vv = V[N][j].toFixed(2);
+            ctx.fillStyle = '#fbbf24'; ctx.fillText(sv, lx, padT + 42 + k*14);
+            ctx.fillStyle = '#8b949e'; ctx.fillText('→', lx + 38, padT + 42 + k*14);
+            ctx.fillStyle = '#34d399'; ctx.fillText(vv, lx + 52, padT + 42 + k*14);
+        }
+    }
+
+    sliders.forEach(s => s.addEventListener('input', draw));
+    styleEl.addEventListener('change', draw);
+    typeEl.addEventListener('change', draw);
+    draw();
+})();
+</script>
+</body>
+</html>
