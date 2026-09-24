@@ -12,12 +12,12 @@
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]})"></script>
     <style>
         :root {
-            --bg-primary: #0a0a0a; --bg-card: #0d1117; --bg-code: #161b22;
-            --text-primary: #e6edf3; --text-secondary: #8b949e;
-            --accent: #fbbf24; --accent-dim: #fbbf2444; --accent-glow: #fbbf2433;
-            --accent-2: #f472b6; --accent-3: #a78bfa; --accent-4: #34d399;
-            --accent-5: #60a5fa;
-            --border: #21262d;
+            --bg-primary: #eef1e8; --bg-card: #e6eadf; --bg-code: #dce1d3;
+            --text-primary: #1c292b; --text-secondary: #61695c;
+            --accent: #835a02; --accent-dim: #835a0244; --accent-glow: #835a021a;
+            --accent-2: #9c405e; --accent-3: #633d6a; --accent-4: #216749;
+            --accent-5: #2a4679;
+            --border: #cad1c0;
             --font-display: 'Space Grotesk', sans-serif;
             --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
             --font-body: 'Inter', sans-serif;
@@ -78,7 +78,7 @@
         .control-row select, .control-row input[type="number"] { background: var(--bg-code); border: 1px solid var(--border); color: var(--text-primary); border-radius: 4px; padding: 0.3rem 0.5rem; font-family: var(--font-mono); font-size: 0.8rem; }
         .control-row .val { font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); min-width: 80px; text-align: right; }
         .btn { font-family: var(--font-mono); font-size: 0.8rem; padding: 0.4rem 0.9rem; background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent); border-radius: 4px; cursor: pointer; transition: background 0.15s ease; }
-        .btn:hover { background: rgba(251,191,36,0.25); }
+        .btn:hover { background: rgba(131,90,2,0.25); }
         .btn:disabled { opacity: 0.4; cursor: not-allowed; }
         .btn.secondary { background: var(--bg-code); color: var(--text-secondary); border-color: var(--border); }
         .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.5rem; margin-top: 0.75rem; }
@@ -99,7 +99,7 @@
         th { background: var(--bg-code); color: var(--accent); font-weight: 600; text-align: left; padding: 0.6rem 0.85rem; border-bottom: 1px solid var(--border); font-family: var(--font-display); }
         td { padding: 0.5rem 0.85rem; border-bottom: 1px solid var(--border); color: var(--text-secondary); vertical-align: top; }
         tr:last-child td { border-bottom: none; }
-        tr:nth-child(even) td { background: rgba(13, 17, 23, 0.5); }
+        tr:nth-child(even) td { background: rgba(230,234,223,0.5); }
         @media (max-width: 640px) {
             .slide { padding: 3rem 1rem; min-height: auto; }
             .slide-number { font-size: 3rem; top: 1.5rem; right: 1rem; }
@@ -508,7 +508,7 @@
     ctx.clearRect(0,0,W,H);
 
     // edges
-    ctx.strokeStyle = '#3a4252';
+    ctx.strokeStyle = '#afb6a5';
     ctx.lineWidth = 1.2;
     for (let n = 0; n < N; n++) {
         for (let j = 0; j <= n; j++) {
@@ -528,16 +528,16 @@
             const x = padL + n*dxC;
             const y = padT + plotH/2 - (2*j - n) * dyC;
             const S = S0 * Math.pow(u, j) * Math.pow(d, n-j);
-            ctx.fillStyle = '#fbbf24';
+            ctx.fillStyle = '#835a02';
             ctx.beginPath(); ctx.arc(x, y, 6, 0, 2*Math.PI); ctx.fill();
-            ctx.fillStyle = '#e6edf3';
+            ctx.fillStyle = '#1c292b';
             ctx.font = '10px JetBrains Mono';
             if (n === N) ctx.fillText(S.toFixed(1), x + 10, y + 4);
         }
     }
 
     // axis label
-    ctx.fillStyle = '#8b949e';
+    ctx.fillStyle = '#61695c';
     ctx.font = '11px JetBrains Mono';
     for (let n = 0; n <= N; n++) {
         const x = padL + n*dxC;
@@ -658,7 +658,7 @@
         ctx.clearRect(0,0,W,H);
 
         // edges (light)
-        ctx.strokeStyle = '#262d36'; ctx.lineWidth = 1;
+        ctx.strokeStyle = '#c2c9b8'; ctx.lineWidth = 1;
         for (let n = 0; n < N; n++) {
             for (let j = 0; j <= n; j++) {
                 const x1 = padL + n*dx;
@@ -689,7 +689,7 @@
         }
 
         // x ticks
-        ctx.fillStyle = '#8b949e'; ctx.font = '10px JetBrains Mono';
+        ctx.fillStyle = '#61695c'; ctx.font = '10px JetBrains Mono';
         const step = Math.max(1, Math.ceil(N / 10));
         for (let n = 0; n <= N; n += step) {
             ctx.fillText('n=' + n, padL + n*dx - 10, padT + plotH + 18);
@@ -697,7 +697,7 @@
 
         // legend block: terminal payoffs
         const lx = padL + plotW + 12;
-        ctx.fillStyle = '#8b949e';
+        ctx.fillStyle = '#61695c';
         ctx.font = '11px JetBrains Mono';
         ctx.fillText('terminal', lx, padT + 10);
         ctx.fillText('S → V', lx, padT + 24);
@@ -707,9 +707,9 @@
             const j = N - k;
             const sv = S[N][j].toFixed(1);
             const vv = V[N][j].toFixed(2);
-            ctx.fillStyle = '#fbbf24'; ctx.fillText(sv, lx, padT + 42 + k*14);
-            ctx.fillStyle = '#8b949e'; ctx.fillText('→', lx + 38, padT + 42 + k*14);
-            ctx.fillStyle = '#34d399'; ctx.fillText(vv, lx + 52, padT + 42 + k*14);
+            ctx.fillStyle = '#835a02'; ctx.fillText(sv, lx, padT + 42 + k*14);
+            ctx.fillStyle = '#61695c'; ctx.fillText('→', lx + 38, padT + 42 + k*14);
+            ctx.fillStyle = '#216749'; ctx.fillText(vv, lx + 52, padT + 42 + k*14);
         }
     }
 
